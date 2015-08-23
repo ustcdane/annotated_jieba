@@ -24,7 +24,7 @@ _get_module_path = lambda path: os.path.normpath(os.path.join(os.getcwd(),
 _get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
 DEFAULT_DICT = _get_module_path("dict.txt")
-#ÉèÖÃlogging
+#è®¾ç½®logging
 log_console = logging.StreamHandler(sys.stderr)
 default_logger = logging.getLogger(__name__)
 default_logger.setLevel(logging.DEBUG)
