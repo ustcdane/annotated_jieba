@@ -61,7 +61,10 @@ class Tokenizer(object):
 
     def __repr__(self):
         return '<Tokenizer dictionary=%r>' % self.dictionary
-
+    '''
+      弃用trie树，减少内存，详情见
+      https://github.com/fxsjy/jieba/pull/187
+    '''
     def gen_pfdict(self, f_name):
         lfreq = {}
         ltotal = 0
