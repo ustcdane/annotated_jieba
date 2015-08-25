@@ -166,6 +166,7 @@ class Tokenizer(object):
     def calc(self, sentence, DAG, route):
         N = len(sentence)
         route[N] = (0, 0)
+        # 对概率值取对数之后的结果(可以让概率相乘的计算变成对数相加,防止相乘造成下溢)
         logtotal = log(self.total)
         for idx in xrange(N - 1, -1, -1):
             route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
