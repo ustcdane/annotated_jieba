@@ -8,6 +8,8 @@ import logging
 import marshal
 from math import log
 
+import jieba
+
 _get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
 DEFAULT_DICT = _get_abs_path("dict.txt")
@@ -53,6 +55,7 @@ class Tokenizer(object):
             load_from_cache_fail = True
             # cachefile 存在
             if os.path.isfile(cache_file):
+
                 try:
                     with open(cache_file, 'rb') as cf:
                         self.FREQ, self.total = marshal.load(cf)
@@ -71,14 +74,24 @@ class Tokenizer(object):
             # 标记初始化成功
             self.initialized = True
 
+    #动态规划，计算最大概率的切分组合
     def calc(self, sentence, DAG, route):
         N = len(sentence)
         route[N] = (0, 0)
+         # 对概率值取对数之后的结果(可以让概率相乘的计算变成对数相加,防止相乘造成下溢)
         logtotal = log(self.total)
-        #对概率值取对数之后的结果(可以让概率相乘的计算变成对数相加,防止相乘造成下溢)
-        for idx in xrange(N - 1, -1, -1): 
+        # 从后往前遍历句子 反向计算最大概率
+        for idx in xrange(N - 1, -1, -1):
+           # 列表推到求最大概率对数路径
+           # route[idx] = max([ (概率对数，词语末字位置) for x in DAG[idx] ])
+           # 以idx:(概率对数最大值，词语末字位置)键值对形式保存在route中
+           # route[x+1][0] 表示 词路径[x+1,N-1]的最大概率对数,
+           # [x+1][0]即表示取句子x+1位置对应元组(概率对数，词语末字位置)的概率对数
             route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
                               logtotal + route[x + 1][0], x) for x in DAG[idx])
+                                                      
+    # DAG中是以{key:list,...}的字典结构存储
+    # key是字的开始位置
     
     def get_DAG(self, sentence):
         self.check_initialized()
@@ -102,8 +115,17 @@ if __name__ == '__main__':
     s = u'去北京大学玩'
     t = Tokenizer()
     dag = t.get_DAG(s)
+<<<<<<< HEAD
     for d in dag:
         print d, dag
+=======
+    print 'DAG:'
+    for d in dag:
+        print d, ':', dag[d]
+>>>>>>> origin/master
     route = {}
     t.calc(s, dag, route)
+    print 'route:'
     print route
+
+    print('/'.join(jieba.cut(u'去北京大学玩')))
