@@ -115,14 +115,10 @@ if __name__ == '__main__':
     s = u'去北京大学玩'
     t = Tokenizer()
     dag = t.get_DAG(s)
-<<<<<<< HEAD
-    for d in dag:
-        print d, dag
-=======
+    
     print 'DAG:'
     for d in dag:
         print d, ':', dag[d]
->>>>>>> origin/master
     route = {}
     t.calc(s, dag, route)
     print 'route:'
