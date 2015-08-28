@@ -6,13 +6,18 @@
 import os
 import logging
 import marshal
+import re
 from math import log
 
 import jieba
 
+
+
 _get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
 DEFAULT_DICT = _get_abs_path("dict.txt")
+re_eng = re.compile('[a-zA-Z0-9]', re.U)
+
 #print DEFAULT_DICT
 
 class Tokenizer(object):
@@ -111,6 +116,30 @@ class Tokenizer(object):
             DAG[k] = tmplist
         return DAG
 
+    def cut_DAG_NO_HMM(self, sentence):
+        DAG = self.get_DAG(sentence)
+        route = {}
+        self.calc(sentence, DAG, route)
+        x = 0
+        N = len(sentence)
+        buf = ''
+        while x < N:
+            y = route[x][1] + 1 
+            l_word = sentence[x:y]# 得到以x位置起点的最大概率切分词语
+            if re_eng.match(l_word) and len(l_word) == 1:#数字,字母
+                buf += l_word
+                x = y
+            else:
+                if buf:
+                    yield buf
+                    buf = ''
+                yield l_word
+                x = y
+        if buf:
+            yield buf
+            buf = ''
+            
+
 if __name__ == '__main__':
     s = u'去北京大学玩'
     t = Tokenizer()
@@ -123,5 +152,5 @@ if __name__ == '__main__':
     t.calc(s, dag, route)
     print 'route:'
     print route
-
-    print('/'.join(jieba.cut(u'去北京大学玩')))
+    
+    print('/'.join(t.cut_DAG_NO_HMM(u'去北京大学玩')))
