@@ -153,4 +153,4 @@ if __name__ == '__main__':
     print 'route:'
     print route
     
-    print('/'.join(t.cut_DAG_NO_HMM(u'去北京大学玩')))
+    print('/'.join(t.cut_DAG_NO_HMM(u'优衣库视频')))
