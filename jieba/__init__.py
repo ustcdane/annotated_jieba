@@ -24,7 +24,7 @@ _get_module_path = lambda path: os.path.normpath(os.path.join(os.getcwd(),
 _get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
 DEFAULT_DICT = _get_module_path("dict.txt")
-#ÉèÖÃlogging
+#è®¾ç½®logging
 log_console = logging.StreamHandler(sys.stderr)
 default_logger = logging.getLogger(__name__)
 default_logger.setLevel(logging.DEBUG)
@@ -62,7 +62,7 @@ class Tokenizer(object):
     def __repr__(self):
         return '<Tokenizer dictionary=%r>' % self.dictionary
     '''
-      ÆúÓÃtrieÊ÷£¬¼õÉÙÄÚ´æ£¬ÏêÇé¼û
+      å¼ƒç”¨trieæ ‘ï¼Œå‡å°‘å†…å­˜ï¼Œè¯¦æƒ…è§
       https://github.com/fxsjy/jieba/pull/187
     '''
     def gen_pfdict(self, f_name):
@@ -163,24 +163,24 @@ class Tokenizer(object):
         if not self.initialized:
             self.initialize()
 
-     #¶¯Ì¬¹æ»®£¬¼ÆËã×î´ó¸ÅÂÊµÄÇĞ·Ö×éºÏ
+     #åŠ¨æ€è§„åˆ’ï¼Œè®¡ç®—æœ€å¤§æ¦‚ç‡çš„åˆ‡åˆ†ç»„åˆ
     def calc(self, sentence, DAG, route):
         N = len(sentence)
         route[N] = (0, 0)
-         # ¶Ô¸ÅÂÊÖµÈ¡¶ÔÊıÖ®ºóµÄ½á¹û(¿ÉÒÔÈÃ¸ÅÂÊÏà³ËµÄ¼ÆËã±ä³É¶ÔÊıÏà¼Ó,·ÀÖ¹Ïà³ËÔì³ÉÏÂÒç)
+         # å¯¹æ¦‚ç‡å€¼å–å¯¹æ•°ä¹‹åçš„ç»“æœ(å¯ä»¥è®©æ¦‚ç‡ç›¸ä¹˜çš„è®¡ç®—å˜æˆå¯¹æ•°ç›¸åŠ ,é˜²æ­¢ç›¸ä¹˜é€ æˆä¸‹æº¢)
         logtotal = log(self.total)
-        # ´ÓºóÍùÇ°±éÀú¾ä×Ó ·´Ïò¼ÆËã×î´ó¸ÅÂÊ
+        # ä»åå¾€å‰éå†å¥å­ åå‘è®¡ç®—æœ€å¤§æ¦‚ç‡
         for idx in xrange(N - 1, -1, -1):
-           # ÁĞ±íÍÆµ½Çó×î´ó¸ÅÂÊ¶ÔÊıÂ·¾¶
-           # route[idx] = max([ (¸ÅÂÊ¶ÔÊı£¬´ÊÓïÄ©×ÖÎ»ÖÃ) for x in DAG[idx] ])
-           # ÒÔidx:(¸ÅÂÊ¶ÔÊı×î´óÖµ£¬´ÊÓïÄ©×ÖÎ»ÖÃ)¼üÖµ¶ÔĞÎÊ½±£´æÔÚrouteÖĞ
-           # route[x+1][0] ±íÊ¾ ´ÊÂ·¾¶[x+1,N-1]µÄ×î´ó¸ÅÂÊ¶ÔÊı,
-           # [x+1][0]¼´±íÊ¾È¡¾ä×Óx+1Î»ÖÃ¶ÔÓ¦Ôª×é(¸ÅÂÊ¶ÔÊı£¬´ÊÓïÄ©×ÖÎ»ÖÃ)µÄ¸ÅÂÊ¶ÔÊı
+           # åˆ—è¡¨æ¨åˆ°æ±‚æœ€å¤§æ¦‚ç‡å¯¹æ•°è·¯å¾„
+           # route[idx] = max([ (æ¦‚ç‡å¯¹æ•°ï¼Œè¯è¯­æœ«å­—ä½ç½®) for x in DAG[idx] ])
+           # ä»¥idx:(æ¦‚ç‡å¯¹æ•°æœ€å¤§å€¼ï¼Œè¯è¯­æœ«å­—ä½ç½®)é”®å€¼å¯¹å½¢å¼ä¿å­˜åœ¨routeä¸­
+           # route[x+1][0] è¡¨ç¤º è¯è·¯å¾„[x+1,N-1]çš„æœ€å¤§æ¦‚ç‡å¯¹æ•°,
+           # [x+1][0]å³è¡¨ç¤ºå–å¥å­x+1ä½ç½®å¯¹åº”å…ƒç»„(æ¦‚ç‡å¯¹æ•°ï¼Œè¯è¯­æœ«å­—ä½ç½®)çš„æ¦‚ç‡å¯¹æ•°
             route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
                               logtotal + route[x + 1][0], x) for x in DAG[idx])
                                                       
-    # DAGÖĞÊÇÒÔ{key:list,...}µÄ×Öµä½á¹¹´æ´¢
-    # keyÊÇ×ÖµÄ¿ªÊ¼Î»ÖÃ
+    # DAGä¸­æ˜¯ä»¥{key:list,...}çš„å­—å…¸ç»“æ„å­˜å‚¨
+    # keyæ˜¯å­—çš„å¼€å§‹ä½ç½®
     def get_DAG(self, sentence):
         self.check_initialized()
         DAG = {}
@@ -235,7 +235,7 @@ class Tokenizer(object):
             yield buf
             buf = ''
 
-    def __cut_DAG(self, sentence):
+        def __cut_DAG(self, sentence):
         DAG = self.get_DAG(sentence)
         route = {}
         self.calc(sentence, DAG, route)
@@ -245,6 +245,7 @@ class Tokenizer(object):
         while x < N:
             y = route[x][1] + 1
             l_word = sentence[x:y]
+           # bufæ”¶é›†è¿ç»­çš„å•ä¸ªå­—,æŠŠå®ƒä»¬ç»„åˆæˆå­—ç¬¦ä¸²å†äº¤ç”± finalseg.cutå‡½æ•°æ¥è¿›è¡Œä¸‹ä¸€æ­¥åˆ†è¯
             if y - x == 1:
                 buf += l_word
             else:
@@ -253,7 +254,7 @@ class Tokenizer(object):
                         yield buf
                         buf = ''
                     else:
-                        if not self.FREQ.get(buf):
+                        if not self.FREQ.get(buf):# æœªç™»å½•è¯,åˆ©ç”¨HMM
                             recognized = finalseg.cut(buf)
                             for t in recognized:
                                 yield t
