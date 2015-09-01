@@ -86,19 +86,20 @@ def viterbi(obs, states, start_p, trans_p, emit_p):
         newpath = {}
         for y in states:
             em_p = emit_p[y].get(obs[t], MIN_FLOAT)
-            (prob, state) = max(
-                [(V[t - 1][y0] + trans_p[y0].get(y, MIN_FLOAT) + em_p, y0) for y0 in PrevStatus[y]])
+            # t时刻状态为y的最大概率(从t-1时刻中选择到达时刻t且状态为y的状态y0)
+            (prob, state) = max([(V[t - 1][y0] + trans_p[y0].get(y, MIN_FLOAT) + em_p, y0) for y0 in PrevStatus[y]])
             V[t][y] = prob
             newpath[y] = path[state] + [y] # 只保存概率最大的一种路径 
-        path = newpath
-# 求出最后一个字哪一种状态的对应概率最大，最后一个字只可能是两种情况：E(结尾)和S(独立词)  
+        path = newpath 
+    # 求出最后一个字哪一种状态的对应概率最大，最后一个字只可能是两种情况：E(结尾)和S(独立词)  
     (prob, state) = max((V[len(obs) - 1][y], y) for y in 'ES')
 
     return (prob, path[state])
 
-
+# 利用 viterbi算法得到句子分词的生成器
 def __cut(sentence):
     global emit_P
+    # viterbi算法得到sentence 的切分
     prob, pos_list = viterbi(sentence, 'BMES', start_P, trans_P, emit_P)
     begin, nexti = 0, 0
     # print pos_list, sentence
@@ -115,16 +116,16 @@ def __cut(sentence):
     if nexti < len(sentence):
         yield sentence[nexti:]
 
-re_han = re.compile("([\u4E00-\u9FA5]+)")
-re_skip = re.compile("(\d+\.\d+|[a-zA-Z0-9]+)")
+re_han = re.compile("([\u4E00-\u9FA5]+)")# 匹配中文的正则
+re_skip = re.compile("(\d+\.\d+|[a-zA-Z0-9]+)")# 匹配数字(包含小数)或字母数字
 
 
 def cut(sentence):
     sentence = strdecode(sentence)
     blocks = re_han.split(sentence)
     for blk in blocks:
-        if re_han.match(blk):
-            for word in __cut(blk):
+        if re_han.match(blk): # 汉语块
+            for word in __cut(blk):# 调用HMM切分
                 yield word
         else:
             tmp = re_skip.split(blk)
