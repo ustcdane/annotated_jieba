@@ -15,7 +15,7 @@ import jieba
 
 _get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
 
-DEFAULT_DICT = _get_abs_path("dict.txt")
+DEFAULT_DICT = _get_abs_path("../jieba/dict.txt")
 re_eng = re.compile('[a-zA-Z0-9]', re.U)
 
 #print DEFAULT_DICT
