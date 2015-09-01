@@ -28,7 +28,7 @@ PrevStatus = {
     'E': 'BM'
 }
 
-
+# 加载HMM 模型,模型参数λ=(A,B,π) 分别加载初始状态分布，转移概率, 发射概率
 def load_model():
     _curpath = os.path.normpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
