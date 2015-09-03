@@ -281,7 +281,7 @@ class Tokenizer(object):
             else:
                 for elem in buf:
                     yield elem
-
+   #jieba分词的主函数,返回结果是一个可迭代的 generator
     def cut(self, sentence, cut_all=False, HMM=True):
         '''
         The main function that segments an entire sentence that contains
@@ -326,6 +326,7 @@ class Tokenizer(object):
                     else: 
                         yield x
 
+    # 分词的(HMM or no HMM)的基础上，对长词再次切分
     def cut_for_search(self, sentence, HMM=True):
         """
         Finer segmentation for search engines.
@@ -344,9 +345,11 @@ class Tokenizer(object):
                         yield gram3
             yield w
 
+    # cut函数直接返回 list 版本
     def lcut(self, *args, **kwargs):
         return list(self.cut(*args, **kwargs))
-
+        
+   # cut_for_search直接返回list版本
     def lcut_for_search(self, *args, **kwargs):
         return list(self.cut_for_search(*args, **kwargs))
 
