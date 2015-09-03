@@ -38,10 +38,16 @@ re_eng = re.compile('[a-zA-Z0-9]', re.U)
 
 # \u4E00-\u9FA5a-zA-Z0-9+#&\._ : All non-space characters. Will be handled with re_han
 # \r\n|\s : whitespace characters. Will not be handled.
-re_han_default = re.compile("([\u4E00-\u9FA5a-zA-Z0-9+#&\._]+)", re.U)
-re_skip_default = re.compile("(\r\n|\s)", re.U)
-re_han_cut_all = re.compile("([\u4E00-\u9FA5]+)", re.U)
-re_skip_cut_all = re.compile("[^a-zA-Z0-9+#\n]", re.U)
+# 注意正则表达式是用括号括起来的,即捕获括号
+# 用括号将正则表达式括起来，那么匹配的字符串也会被列入到list中返回
+ #re.U是使得compile的结果取决于unicode定义的字符属性 
+ # 精准模式正则
+re_han_default = re.compile("([\u4E00-\u9FA5a-zA-Z0-9+#&\._]+)", re.U)# 汉字码、非空白字符
+re_skip_default = re.compile("(\r\n|\s)", re.U) # 换行或空白
+
+# 全局模式的正则
+re_han_cut_all = re.compile("([\u4E00-\u9FA5]+)", re.U)# 全局模式 只包含汉字
+re_skip_cut_all = re.compile("[^a-zA-Z0-9+#\n]", re.U)# 字母数字+#
 
 def setLogLevel(log_level):
     global logger
@@ -268,7 +274,7 @@ class Tokenizer(object):
         if buf:
             if len(buf) == 1:
                 yield buf
-            elif not self.FREQ.get(buf):
+            elif not self.FREQ.get(buf): # 未登录词,利用HMM
                 recognized = finalseg.cut(buf)
                 for t in recognized:
                     yield t
@@ -280,42 +286,44 @@ class Tokenizer(object):
         '''
         The main function that segments an entire sentence that contains
         Chinese characters into seperated words.
-
         Parameter:
             - sentence: The str(unicode) to be segmented.
             - cut_all: Model type. True for full pattern, False for accurate pattern.
             - HMM: Whether to use the Hidden Markov Model.
         '''
-        sentence = strdecode(sentence)
-
+        sentence = strdecode(sentence) # 解码为unicode
+        # 不同模式下的正则
         if cut_all:
             re_han = re_han_cut_all
             re_skip = re_skip_cut_all
         else:
             re_han = re_han_default
             re_skip = re_skip_default
+
+         # 设置不同模式下的cut_block分词方法
         if cut_all:
             cut_block = self.__cut_all
         elif HMM:
             cut_block = self.__cut_DAG
         else:
             cut_block = self.__cut_DAG_NO_HMM
+        # 先用正则对句子进行切分
         blocks = re_han.split(sentence)
         for blk in blocks:
             if not blk:
                 continue
-            if re_han.match(blk):
-                for word in cut_block(blk):
+            if re_han.match(blk): # re_han匹配的串
+                for word in cut_block(blk):# 根据不同模式的方法进行分词
                     yield word
-            else:
-                tmp = re_skip.split(blk)
+            else:# 按照re_skip正则表对blk进行重新切分
+                tmp = re_skip.split(blk)# 返回list
                 for x in tmp:
                     if re_skip.match(x):
                         yield x
-                    elif not cut_all:
+                    elif not cut_all: # 精准模式下逐个字符输出
                         for xx in x:
                             yield xx
-                    else:
+                    else: 
                         yield x
 
     def cut_for_search(self, sentence, HMM=True):
@@ -360,10 +368,8 @@ class Tokenizer(object):
     def load_userdict(self, f):
         '''
         Load personalized dict to improve detect rate.
-
         Parameter:
             - f : A plain text file contains words and their ocurrences.
-
         Structure of dict file:
         word1 freq1 word_type1
         word2 freq2 word_type2
@@ -396,7 +402,6 @@ class Tokenizer(object):
     def add_word(self, word, freq=None, tag=None):
         """
         Add a word to dictionary.
-
         freq and tag can be omitted, freq defaults to be a calculated value
         that ensures the word can be cut out.
         """
@@ -422,12 +427,10 @@ class Tokenizer(object):
         """
         Suggest word frequency to force the characters in a word to be
         joined or splitted.
-
         Parameter:
             - segment : The segments that the word is expected to be cut into,
                         If the word should be treated as a whole, use a str.
             - tune : If True, tune the word frequency.
-
         Note that HMM may affect the final result. If the result doesn't change,
         set HMM=False.
         """
@@ -452,7 +455,6 @@ class Tokenizer(object):
     def tokenize(self, unicode_sentence, mode="default", HMM=True):
         """
         Tokenize a sentence and yields tuples of (word, start, end)
-
         Parameter:
             - sentence: the str(unicode) to be segmented.
             - mode: "default" or "search", "search" is for finer segmentation.
@@ -563,7 +565,6 @@ def enable_parallel(processnum=None):
     """
     Change the module's `cut` and `cut_for_search` functions to the
     parallel version.
-
     Note that this only works using dt, custom Tokenizer
     instances are not supported.
     """
