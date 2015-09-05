@@ -177,7 +177,7 @@ class Tokenizer(object):
         logtotal = log(self.total)
         # 从后往前遍历句子 反向计算最大概率
         for idx in xrange(N - 1, -1, -1):
-           # 列表推到求最大概率对数路径
+           # 列表推倒求最大概率对数路径
            # route[idx] = max([ (概率对数，词语末字位置) for x in DAG[idx] ])
            # 以idx:(概率对数最大值，词语末字位置)键值对形式保存在route中
            # route[x+1][0] 表示 词路径[x+1,N-1]的最大概率对数,
