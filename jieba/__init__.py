@@ -72,19 +72,19 @@ class Tokenizer(object):
       https://github.com/fxsjy/jieba/pull/187
     '''
     def gen_pfdict(self, f_name):
-        lfreq = {}
-        ltotal = 0
-        with open(f_name, 'rb') as f:
-            for lineno, line in enumerate(f, 1):
+        lfreq = {} # 字典存储  词条:出现次数
+        ltotal = 0 # 所有词条的总的出现次数
+        with open(f_name, 'rb') as f: # 打开文件 dict.txt 
+            for lineno, line in enumerate(f, 1): # 行号,行
                 try:
-                    line = line.strip().decode('utf-8')
-                    word, freq = line.split(' ')[:2]
+                    line = line.strip().decode('utf-8') # 解码为Unicode
+                    word, freq = line.split(' ')[:2] # 获得词条 及其出现次数
                     freq = int(freq)
                     lfreq[word] = freq
                     ltotal += freq
-                    for ch in xrange(len(word)):
+                    for ch in xrange(len(word)):# 处理word的前缀
                         wfrag = word[:ch + 1]
-                        if wfrag not in lfreq:
+                        if wfrag not in lfreq: # word前缀不在lfreq则其出现频次置0 
                             lfreq[wfrag] = 0
                 except ValueError:
                     raise ValueError(
