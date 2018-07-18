@@ -65,7 +65,7 @@ class Tokenizer(object):
     """
     def __init__(self, dictionary=DEFAULT_DICT):
         """
-        设置进程锁，字典路径，频率，综合，用户字典标记表，初始化标签,临时目录和缓存文件
+        设置进程锁，字典路径，频率，综合词数，用户字典标记表，初始化标签,临时目录和缓存文件
         """
         self.lock = threading.RLock()
         self.dictionary = _get_abs_path(dictionary)
@@ -193,56 +193,72 @@ class Tokenizer(object):
         if not self.initialized:
             self.initialize()
 
-     #动态规划，计算最大概率的切分组合
+    #动态规划，计算最大概率的切分组合
     def calc(self, sentence, DAG, route):
         N = len(sentence)
         route[N] = (0, 0)
-         # 对概率值取对数之后的结果(可以让概率相乘的计算变成对数相加,防止相乘造成下溢)
+        # 对概率值取对数之后的结果(可以让概率相乘的计算变成对数相加,防止相乘造成下溢)
         logtotal = log(self.total)
         # 从后往前遍历句子 反向计算最大概率
         for idx in xrange(N - 1, -1, -1):
+           # 从DAG图反向遍历
            # 列表推倒求最大概率对数路径
            # route[idx] = max([ (概率对数，词语末字位置) for x in DAG[idx] ])
-           # 以idx:(概率对数最大值，词语末字位置)键值对形式保存在route中
+           # self.FREQ.get(sentence[idx:x+1]) 为句子中最后第二位到末尾的值，取他们的频率，如果没有取1
+           # 以{idx:(概率对数最大值，词语末字位置)}键值对形式保存在route中
            # route[x+1][0] 表示 词路径[x+1,N-1]的最大概率对数,
            # [x+1][0]即表示取句子x+1位置对应元组(概率对数，词语末字位置)的概率对数
-            route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
-                              logtotal + route[x + 1][0], x) for x in DAG[idx])
+            route[idx] = max(
+                            (log(self.FREQ.get(sentence[idx:x + 1]) or 1) - logtotal + route[x + 1][0], x) 
+                            for x in DAG[idx]           #为已idx为开始，x结束的片段
+                            )
                                                       
     # DAG中是以{key:list,...}的字典结构存储
     # key是字的开始位置
+    # 输入的是一段文本
     def get_DAG(self, sentence):
+        """
+        双重遍历句子，出现在频率字典中的词语挑出，形成节点被按顺序赋予到DAG中
+        DAG：把前进的顺序当作主干，链接的词语就是叶子，但叶子可以被主干的不同地方多次链接
+            当作图来看就是DAG
+        """
         self.check_initialized()
         DAG = {}
         N = len(sentence)
-        for k in xrange(N):
+        for k in xrange(N): #依次遍历文本中的每个位置，K为第一下标
             tmplist = []
-            i = k
-            frag = sentence[k]
-            while i < N and frag in self.FREQ:
-                if self.FREQ[frag]:
-                    tmplist.append(i)
+            i = k           #设置I默认为K，第二下标
+            frag = sentence[k]  #设置片段开始，下标为K
+            while i < N and frag in self.FREQ:  #判断该片段是否在前缀词典中，如果不在则跳出，说明该片段已经超出该词的长度
+                if self.FREQ[frag]:     #如果该片段大于零，即无前缀，加入DAG中，否则继续循环
+                    tmplist.append(i)   
                 i += 1
-                frag = sentence[k:i + 1]
-            if not tmplist:
+                frag = sentence[k:i + 1]    #新的片段较左边加一个字
+            if not tmplist: #如果都有前缀，压入下标本身（适用于字典末尾?
                 tmplist.append(k)
-            DAG[k] = tmplist
+            DAG[k] = tmplist    #默认赋予的是词语的下标开始，值为已I结尾的词语
         return DAG
 
     def __cut_all(self, sentence):
+        """
+        详细切分文本中的句子
+        """
         dag = self.get_DAG(sentence)
         old_j = -1
-        for k, L in iteritems(dag):
-            if len(L) == 1 and k > old_j:
-                yield sentence[k:L[0] + 1]
-                old_j = L[0]
+        for k, L in iteritems(dag): #返回下标和列表 （迭代器类型
+            if len(L) == 1 and k > old_j:   #如果是是单字
+                yield sentence[k:L[0] + 1]  #L[0]为K，返回单字
+                old_j = L[0]                #重新设置标签
             else:
-                for j in L:
+                for j in L:                 #如果不是单字，挨个返回
                     if j > k:
                         yield sentence[k:j + 1]
                         old_j = j
 
     def __cut_DAG_NO_HMM(self, sentence):
+        """
+        利用已有的字典组成DAG，然后动态规划行成最大概率切分
+        """
         DAG = self.get_DAG(sentence)
         route = {}
         self.calc(sentence, DAG, route)
@@ -305,7 +321,8 @@ class Tokenizer(object):
             else:
                 for elem in buf:
                     yield elem
-   #jieba分词的主函数,返回结果是一个可迭代的 generator
+    
+    #jieba分词的主函数,返回结果是一个可迭代的 generator
     def cut(self, sentence, cut_all=False, HMM=True):
         '''
         The main function that segments an entire sentence that contains
@@ -351,6 +368,7 @@ class Tokenizer(object):
                         yield x
 
     # 分词的(HMM or no HMM)的基础上，对长词再次切分
+    # 利用字频
     def cut_for_search(self, sentence, HMM=True):
         """
         Finer segmentation for search engines.
@@ -380,6 +398,7 @@ class Tokenizer(object):
     _lcut = lcut
     _lcut_for_search = lcut_for_search
 
+    #返回list类型
     def _lcut_no_hmm(self, sentence):
         return self.lcut(sentence, False, False)
 
@@ -428,6 +447,7 @@ class Tokenizer(object):
 
     def add_word(self, word, freq=None, tag=None):
         """
+        增加字到字典，freq与tag可省略
         Add a word to dictionary.
         freq and tag can be omitted, freq defaults to be a calculated value
         that ensures the word can be cut out.
@@ -590,6 +610,7 @@ def _pcut_for_search(sentence, HMM=True):
 
 def enable_parallel(processnum=None):
     """
+    #开启多线程版本?
     Change the module's `cut` and `cut_for_search` functions to the
     parallel version.
     Note that this only works using dt, custom Tokenizer
@@ -611,6 +632,7 @@ def enable_parallel(processnum=None):
 
 
 def disable_parallel():
+    #禁用多线程？
     global pool, dt, cut, cut_for_search
     if pool:
         pool.close()

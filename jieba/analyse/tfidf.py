@@ -76,6 +76,9 @@ class IDFLoader(object):
 class TFIDF(KeywordExtractor):
 
     def __init__(self, idf_path=None):
+        """
+        设置默认标注，，停止词，加载idf，获取idf频率
+        """
         self.tokenizer = jieba.dt
         self.postokenizer = jieba.posseg.dt
         self.stop_words = self.STOP_WORDS.copy()
@@ -83,6 +86,9 @@ class TFIDF(KeywordExtractor):
         self.idf_freq, self.median_idf = self.idf_loader.get_idf()
 
     def set_idf_path(self, idf_path):
+        """
+        设置idf路径
+        """
         new_abs_path = _get_abs_path(idf_path)
         if not os.path.isfile(new_abs_path):
             raise Exception("jieba: file does not exist: " + new_abs_path)
@@ -91,6 +97,7 @@ class TFIDF(KeywordExtractor):
 
     def extract_tags(self, sentence, topK=20, withWeight=False, allowPOS=()):
         """
+        使用TF-IDF提取关键词
         Extract keywords from sentence using TF-IDF algorithm.
         Parameter:
             - topK: return how many top keywords. `None` for all possible words.
@@ -100,8 +107,8 @@ class TFIDF(KeywordExtractor):
                         if the POS of w is not in this list,it will be filtered.
         """
         if allowPOS:
-            allowPOS = frozenset(allowPOS)
-            words = self.postokenizer.cut(sentence)
+            allowPOS = frozenset(allowPOS)  
+            words = self.postokenizer.cut(sentence) 
         else:
             words = self.tokenizer.cut(sentence)
         freq = {}
