@@ -1,11 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 import re
 import os
-import marshal
+import marshal #序列与反序列化
 import sys
 from .._compat import *
 
-MIN_FLOAT = -3.14e100
+MIN_FLOAT = -3.14e100   
 
 PROB_START_P = "prob_start.p" 
 PROB_TRANS_P = "prob_trans.p"

@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals    #强行引进特性,防止兼容问题
 __version__ = '0.37'
 __license__ = 'MIT'
 import re
@@ -6,42 +6,45 @@ import os
 import sys
 import time
 import logging
-import marshal
-import tempfile
-import threading
-from math import log
-from hashlib import md5
+import marshal  #序列与反序列化
+import tempfile #临时文件
+import threading    #多线程
+from math import log    #求对数（默认为e为底）
+from hashlib import md5 #md5摘要算法
 from ._compat import *
-from . import finalseg
+from . import finalseg  
 
-if os.name == 'nt':
-    from shutil import move as _replace_file
+if os.name == 'nt':  #windows:移动  linux:重命名
+    from shutil import move as _replace_file    
 else:
     _replace_file = os.rename
 
-_get_module_path = lambda path: os.path.normpath(os.path.join(os.getcwd(),
-                                                 os.path.dirname(__file__), path))
-_get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))
+_get_module_path = lambda path: os.path.normpath(os.path.join(os.getcwd(),      #获取模块的绝对距离
+                                                 os.path.dirname(__file__), path)) 
+_get_abs_path = lambda path: os.path.normpath(os.path.join(os.getcwd(), path))  #获取当前绝对路径
 
-DEFAULT_DICT = _get_module_path("dict.txt")
+
+DEFAULT_DICT = _get_module_path("dict.txt") #默认字典
+
 #设置logging
 log_console = logging.StreamHandler(sys.stderr)
 default_logger = logging.getLogger(__name__)
 default_logger.setLevel(logging.DEBUG)
 default_logger.addHandler(log_console)
 
-DICT_WRITING = {}
+DICT_WRITING = {}   #字典警告
 
 pool = None
 
-re_eng = re.compile('[a-zA-Z0-9]', re.U)
+re_eng = re.compile('[a-zA-Z0-9]', re.U)  #英文匹配
 
 # \u4E00-\u9FA5a-zA-Z0-9+#&\._ : All non-space characters. Will be handled with re_han
 # \r\n|\s : whitespace characters. Will not be handled.
 # 注意正则表达式是用括号括起来的,即捕获括号
 # 用括号将正则表达式括起来，那么匹配的字符串也会被列入到list中返回
- #re.U是使得compile的结果取决于unicode定义的字符属性 
- # 精准模式正则
+# re.U是使得compile的结果取决于unicode定义的字符属性 
+
+# 精准模式正则
 re_han_default = re.compile("([\u4E00-\u9FA5a-zA-Z0-9+#&\._]+)", re.U)# 汉字码、非空白字符
 re_skip_default = re.compile("(\r\n|\s)", re.U) # 换行或空白
 
@@ -50,12 +53,20 @@ re_han_cut_all = re.compile("([\u4E00-\u9FA5]+)", re.U)# 全局模式 只包含�
 re_skip_cut_all = re.compile("[^a-zA-Z0-9+#\n]", re.U)# 字母数字+#
 
 def setLogLevel(log_level):
+    """
+    设置日志等级
+    """
     global logger
     default_logger.setLevel(log_level)
 
 class Tokenizer(object):
-
+    """
+    标记生成类
+    """
     def __init__(self, dictionary=DEFAULT_DICT):
+        """
+        设置进程锁，字典路径，频率，综合，用户字典标记表，初始化标签,临时目录和缓存文件
+        """
         self.lock = threading.RLock()
         self.dictionary = _get_abs_path(dictionary)
         self.FREQ = {}
@@ -72,6 +83,9 @@ class Tokenizer(object):
       https://github.com/fxsjy/jieba/pull/187
     '''
     def gen_pfdict(self, f_name):
+        """
+        加载数据生成字典
+        """
         lfreq = {} # 字典存储  词条:出现次数
         ltotal = 0 # 所有词条的总的出现次数
         with open(f_name, 'rb') as f: # 打开文件 dict.txt 
@@ -84,7 +98,7 @@ class Tokenizer(object):
                     ltotal += freq
                     for ch in xrange(len(word)):# 处理word的前缀
                         wfrag = word[:ch + 1]
-                        if wfrag not in lfreq: # word前缀不在lfreq则其出现频次置0 
+                        if wfrag not in lfreq: # word前缀不在则lfreq，其出现频次置0 例：{"不" : 0, "不拘" : ,"不拘一" , 0, "不拘一格" : freq} 
                             lfreq[wfrag] = 0
                 except ValueError:
                     raise ValueError(
@@ -92,6 +106,12 @@ class Tokenizer(object):
         return lfreq, ltotal
 
     def initialize(self, dictionary=None):
+        """
+        初始化函数
+        """
+
+        #字典存在并相等则结束，否则局部字典覆盖类字典并回滚初始化标记
+        #字典不存在类字典覆盖局部字典
         if dictionary:
             abs_path = _get_abs_path(dictionary)
             if self.dictionary == abs_path and self.initialized:
@@ -102,6 +122,7 @@ class Tokenizer(object):
         else:
             abs_path = self.dictionary
 
+        
         with self.lock:
             try:
                 with DICT_WRITING[abs_path]:
@@ -166,6 +187,9 @@ class Tokenizer(object):
             default_logger.debug("Prefix dict has been built succesfully.")
 
     def check_initialized(self):
+        """
+        确保初始化
+        """
         if not self.initialized:
             self.initialize()
 
