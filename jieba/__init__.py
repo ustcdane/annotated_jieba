@@ -98,7 +98,7 @@ class Tokenizer(object):
                     ltotal += freq
                     for ch in xrange(len(word)):# 处理word的前缀
                         wfrag = word[:ch + 1]
-                        if wfrag not in lfreq: # word前缀不在则lfreq，其出现频次置0 例：{"不" : 0, "不拘" : ,"不拘一" , 0, "不拘一格" : freq} 
+                        if wfrag not in lfreq: # word前缀不在则lfreq，其出现频次置0 例：{"不" : 0, "不拘" :0 ,"不拘一" , 0, "不拘一格" : freq} 
                             lfreq[wfrag] = 0
                 except ValueError:
                     raise ValueError(
@@ -411,6 +411,7 @@ class Tokenizer(object):
     def get_abs_path_dict(self):
         return _get_abs_path(self.dictionary)
 
+    #加载用户字典
     def load_userdict(self, f):
         '''
         Load personalized dict to improve detect rate.
@@ -470,6 +471,7 @@ class Tokenizer(object):
         """
         self.add_word(word, 0)
 
+    #建议频率
     def suggest_freq(self, segment, tune=False):
         """
         Suggest word frequency to force the characters in a word to be
@@ -498,6 +500,7 @@ class Tokenizer(object):
         if tune:
             add_word(word, freq)
         return freq
+
 
     def tokenize(self, unicode_sentence, mode="default", HMM=True):
         """
@@ -540,6 +543,7 @@ class Tokenizer(object):
             self.initialized = False
 
 
+# 
 # default Tokenizer instance
 
 dt = Tokenizer()

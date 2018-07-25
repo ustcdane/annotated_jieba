@@ -1,3 +1,4 @@
+'''词性标注'''
 from __future__ import absolute_import, unicode_literals
 import os
 import re
@@ -21,6 +22,7 @@ re_eng = re.compile("[a-zA-Z0-9]+")
 re_num = re.compile("[\.0-9]+")
 
 re_eng1 = re.compile('^[a-zA-Z0-9]$', re.U)
+
 
 
 def load_model(f_name):
