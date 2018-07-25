@@ -6,14 +6,16 @@ import jieba.posseg
 from operator import itemgetter
 
 _get_module_path = lambda path: os.path.normpath(os.path.join(os.getcwd(),
-                                                 os.path.dirname(__file__), path))
+                                                 os.path.dirname(__file__), path))#当前模块路径
 _get_abs_path = jieba._get_abs_path
 
 DEFAULT_IDF = _get_module_path("idf.txt")
 
 
 class KeywordExtractor(object):
-
+    """
+    根据已有的文本数据添加停止词到字典
+    """
     STOP_WORDS = set((
         "the", "of", "is", "and", "to", "in", "that", "we", "for", "an", "are",
         "by", "be", "as", "on", "with", "can", "if", "from", "which", "you", "it",
@@ -21,6 +23,9 @@ class KeywordExtractor(object):
     ))
 
     def set_stop_words(self, stop_words_path):
+        """
+        读取停止词文本，填入词典
+        """
         abs_path = _get_abs_path(stop_words_path)
         if not os.path.isfile(abs_path):
             raise Exception("jieba: file does not exist: " + abs_path)
@@ -29,36 +34,51 @@ class KeywordExtractor(object):
             self.stop_words.add(line)
 
     def extract_tags(self, *args, **kwargs):
+        """
+        抛出一个错误，然后什么都不做((逃
+        """
         raise NotImplementedError
 
 
 class IDFLoader(object):
+    """
+    根据已有的文本数据设置并获取idf的频率
+    """
 
     def __init__(self, idf_path=None):
         self.path = ""
-        self.idf_freq = {}
-        self.median_idf = 0.0
+        self.idf_freq = {}#逆向文件频率
+        self.median_idf = 0.0   
         if idf_path:
             self.set_new_path(idf_path)
 
     def set_new_path(self, new_idf_path):
+        """
+        传入一个非空地址,读取这个地址的idf数据，设置idf频率和中间频率
+        """
         if self.path != new_idf_path:
-            self.path = new_idf_path
+            self.path = new_idf_path    #设置idf地址
             content = open(new_idf_path, 'rb').read().decode('utf-8')
-            self.idf_freq = {}
-            for line in content.splitlines():
+            self.idf_freq = {}          #idf频率
+            for line in content.splitlines():   
                 word, freq = line.strip().split(' ')
                 self.idf_freq[word] = float(freq)
             self.median_idf = sorted(
                 self.idf_freq.values())[len(self.idf_freq) // 2]
 
     def get_idf(self):
+        """
+        获取idf和median频率
+        """
         return self.idf_freq, self.median_idf
 
 
 class TFIDF(KeywordExtractor):
 
     def __init__(self, idf_path=None):
+        """
+        设置默认标注，，停止词，加载idf，获取idf频率
+        """
         self.tokenizer = jieba.dt
         self.postokenizer = jieba.posseg.dt
         self.stop_words = self.STOP_WORDS.copy()
@@ -66,6 +86,9 @@ class TFIDF(KeywordExtractor):
         self.idf_freq, self.median_idf = self.idf_loader.get_idf()
 
     def set_idf_path(self, idf_path):
+        """
+        设置idf路径
+        """
         new_abs_path = _get_abs_path(idf_path)
         if not os.path.isfile(new_abs_path):
             raise Exception("jieba: file does not exist: " + new_abs_path)
@@ -74,6 +97,7 @@ class TFIDF(KeywordExtractor):
 
     def extract_tags(self, sentence, topK=20, withWeight=False, allowPOS=()):
         """
+        使用TF-IDF提取关键词
         Extract keywords from sentence using TF-IDF algorithm.
         Parameter:
             - topK: return how many top keywords. `None` for all possible words.
@@ -83,8 +107,8 @@ class TFIDF(KeywordExtractor):
                         if the POS of w is not in this list,it will be filtered.
         """
         if allowPOS:
-            allowPOS = frozenset(allowPOS)
-            words = self.postokenizer.cut(sentence)
+            allowPOS = frozenset(allowPOS)  
+            words = self.postokenizer.cut(sentence) 
         else:
             words = self.tokenizer.cut(sentence)
         freq = {}

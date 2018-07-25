@@ -1,3 +1,4 @@
+'''dp->HMM'''
 import sys
 import operator
 MIN_FLOAT = -3.14e100

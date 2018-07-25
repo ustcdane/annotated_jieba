@@ -11,17 +11,23 @@ from .._compat import *
 
 
 class UndirectWeightedGraph:
+    """
+    无向直接加权图
+    """
     d = 0.85
 
     def __init__(self):
         self.graph = defaultdict(list)
 
-    def addEdge(self, start, end, weight):
+    def addEdge(self, start, end, weight): 
         # use a tuple (start, end, weight) instead of a Edge object
         self.graph[start].append((start, end, weight))
         self.graph[end].append((end, start, weight))
 
     def rank(self):
+        """
+
+        """
         ws = defaultdict(float)
         outSum = defaultdict(float)
 
@@ -55,6 +61,10 @@ class UndirectWeightedGraph:
 
 
 class TextRank(KeywordExtractor):
+    """
+
+
+    """
 
     def __init__(self):
         self.tokenizer = self.postokenizer = jieba.posseg.dt
